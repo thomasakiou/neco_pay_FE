@@ -168,8 +168,25 @@ export default function PostingPage() {
                 const bank = staff?.bank_name || '';
                 const accountNo = staff?.account_no || '';
 
+                // Map office codes to city names for distance lookup
+                const mapOfficeCodeToCity = (code: string): string => {
+                    const codeUpper = code.toUpperCase().trim();
+                    // Check if contains HQ (any position)
+                    if (codeUpper.includes('HQ')) return 'Minna';
+                    // Check specific zone codes
+                    if (codeUpper.includes('SS-ZO')) return 'P/Harcourt';
+                    if (codeUpper.includes('SE-ZO')) return 'Uwka';
+                    if (codeUpper.includes('SW-ZO')) return 'Ibadan';
+                    if (codeUpper.includes('NC-ZO')) return 'Ilorin';
+                    if (codeUpper.includes('NW-ZO')) return 'Kano';
+                    if (codeUpper.includes('NE-ZO')) return 'Maiduguri';
+                    // Return original if no mapping found
+                    return code;
+                };
+
                 // Extract distance.distance where distance.source = posting.station AND distance.target = posting.posting
-                const stationNorm = posting.station?.toString().trim().toLowerCase();
+                const stationCity = mapOfficeCodeToCity(posting.station || '');
+                const stationNorm = stationCity.toString().trim().toLowerCase();
                 const postingNorm = posting.posting?.toString().trim().toLowerCase();
                 const distanceRecord = distances.find(
                     d => d.source?.toString().trim().toLowerCase() === stationNorm &&
@@ -185,9 +202,10 @@ export default function PostingPage() {
                     // Convert both to strings to handle type mismatch
                     return contissDigits === String(posting.conraiss);
                 });
+                const kilometer = parameterRecord?.kilometer || 0;
 
-                // TODO: Transport calculation - implement distance lookup later
-                const transport = 0;
+                // Calculate Transport = distance.distance * parameter.kilometer
+                const transport = dist * kilometer;
 
                 // Calculate Amt_per_night from parameter.pernight
                 const amtPerNight = parameterRecord?.pernight || 0;
