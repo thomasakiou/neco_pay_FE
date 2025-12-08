@@ -182,7 +182,8 @@ export default function PostingPage() {
                     if (!p.contiss || !posting.conraiss) return false;
                     // Extract numeric digits from contiss (e.g., 'Contiss 01' -> '01')
                     const contissDigits = p.contiss.match(/\d+/)?.[0] || '';
-                    return contissDigits === posting.conraiss;
+                    // Convert both to strings to handle type mismatch
+                    return contissDigits === String(posting.conraiss);
                 });
 
                 // TODO: Transport calculation - implement distance lookup later
