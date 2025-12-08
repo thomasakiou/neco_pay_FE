@@ -143,11 +143,22 @@ export default function PostingPage() {
 
             // Generate payment records
             const paymentRecords = allData.map((posting) => {
-                // Find staff by file_no (case-insensitive and trimmed)
-                const fileNo = posting.file_no?.toString().trim().toLowerCase();
-                const staff = staffList.find(s =>
-                    s.staff_id?.toString().trim().toLowerCase() === fileNo
-                );
+                // Find staff by file_no with padding for 2-3 digit numbers
+                let fileNo = posting.file_no?.toString().trim() || '';
+                // Pad to 4 digits if it's a 2 or 3 digit number
+                if (fileNo && /^\d{2,3}$/.test(fileNo)) {
+                    fileNo = fileNo.padStart(4, '0');
+                }
+                const fileNoNormalized = fileNo.toLowerCase();
+
+                const staff = staffList.find(s => {
+                    let staffId = s.staff_id?.toString().trim() || '';
+                    // Pad to 4 digits if it's a 2 or 3 digit number
+                    if (staffId && /^\d{2,3}$/.test(staffId)) {
+                        staffId = staffId.padStart(4, '0');
+                    }
+                    return staffId.toLowerCase() === fileNoNormalized;
+                });
 
                 // Debug logging
                 if (!staff && fileNo) {
