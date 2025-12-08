@@ -143,18 +143,30 @@ export default function PostingPage() {
 
             // Generate payment records
             const paymentRecords = allData.map((posting) => {
-                // Find staff by file_no
-                const staff = staffList.find(s => s.staff_id === posting.file_no);
-                const bank = staff?.bank || '';
+                // Find staff by file_no (case-insensitive and trimmed)
+                const fileNo = posting.file_no?.toString().trim().toLowerCase();
+                const staff = staffList.find(s =>
+                    s.staff_id?.toString().trim().toLowerCase() === fileNo
+                );
+
+                // Debug logging
+                if (!staff && fileNo) {
+                    console.log(`No staff found for file_no: "${posting.file_no}" (normalized: "${fileNo}")`);
+                }
+
+                const bank = staff?.bank_name || '';
                 const accountNo = staff?.account_no || '';
 
                 // Extract distance.distance where distance.source = posting.station AND distance.target = posting.posting
+                const stationNorm = posting.station?.toString().trim().toLowerCase();
+                const postingNorm = posting.posting?.toString().trim().toLowerCase();
                 const distanceRecord = distances.find(
-                    d => d.source === posting.station && d.target === posting.posting
+                    d => d.source?.toString().trim().toLowerCase() === stationNorm &&
+                        d.target?.toString().trim().toLowerCase() === postingNorm
                 );
                 const dist = distanceRecord?.distance || 0;
 
-                // Extract payment.kilometer where last two digits of payment.contiss = posting.conraiss
+                // Extract parameter.kilometer where last two digits of parameter.contiss = posting.conraiss
                 const parameterRecord = parameters.find(p => {
                     if (!p.contiss || !posting.conraiss) return false;
                     const lastTwoDigits = p.contiss.slice(-2);
@@ -162,17 +174,17 @@ export default function PostingPage() {
                 });
                 const kilometer = parameterRecord?.kilometer || 0;
 
-                // Calculate Transport = distance.distance * payment.kilometer
+                // Calculate Transport = distance.distance * parameter.kilometer
                 const transport = dist * kilometer;
 
                 // Calculate Amt_per_night from parameter.pernight
                 const amtPerNight = parameterRecord?.pernight || 0;
 
-                // Calculate DTA = (Amt_per_night * Numb_of_nights) + Local_Runs
-                const dta = (amtPerNight * numbOfNights) + localRuns;
+                // Calculate DTA = Amt_per_night * Numb_of_nights
+                const dta = amtPerNight * numbOfNights;
 
-                // Calculate Netpay = DTA + Transport
-                const netpay = dta + transport;
+                // Calculate Netpay = Transport + DTA + Local_Runs
+                const netpay = transport + dta + localRuns;
 
                 return {
                     File_No: posting.file_no || '',
