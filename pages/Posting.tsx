@@ -177,16 +177,16 @@ export default function PostingPage() {
                 );
                 const dist = distanceRecord?.distance || 0;
 
-                // Extract parameter.kilometer where last two digits of parameter.contiss = posting.conraiss
+                // Extract parameter where numeric digits in parameter.contiss = posting.conraiss
                 const parameterRecord = parameters.find(p => {
                     if (!p.contiss || !posting.conraiss) return false;
-                    const lastTwoDigits = p.contiss.slice(-2);
-                    return lastTwoDigits === posting.conraiss;
+                    // Extract numeric digits from contiss (e.g., 'Contiss 01' -> '01')
+                    const contissDigits = p.contiss.match(/\d+/)?.[0] || '';
+                    return contissDigits === posting.conraiss;
                 });
-                const kilometer = parameterRecord?.kilometer || 0;
 
-                // Calculate Transport = distance.distance * parameter.kilometer
-                const transport = dist * kilometer;
+                // TODO: Transport calculation - implement distance lookup later
+                const transport = 0;
 
                 // Calculate Amt_per_night from parameter.pernight
                 const amtPerNight = parameterRecord?.pernight || 0;
