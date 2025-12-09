@@ -1,9 +1,12 @@
 import { Parameter, CreateParameterDTO, UpdateParameterDTO } from '../types/parameter';
+import { getAuthHeaders, getAuthHeadersForFormData } from './apiHelpers';
 
 const API_URL = ''; // Proxy handles the base URL
 
 export async function getParameters(skip: number = 0, limit: number = 100): Promise<Parameter[]> {
-    const response = await fetch(`${API_URL}/parameters/?skip=${skip}&limit=${limit}`);
+    const response = await fetch(`${API_URL}/parameters/?skip=${skip}&limit=${limit}`, {
+        headers: getAuthHeaders(),
+    });
     if (!response.ok) {
         throw new Error('Failed to fetch parameters');
     }
@@ -13,7 +16,7 @@ export async function getParameters(skip: number = 0, limit: number = 100): Prom
 export async function createParameter(data: CreateParameterDTO): Promise<Parameter> {
     const response = await fetch(`${API_URL}/parameters/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
     });
     if (!response.ok) {
@@ -26,7 +29,7 @@ export async function createParameter(data: CreateParameterDTO): Promise<Paramet
 export async function updateParameter(id: number, data: UpdateParameterDTO): Promise<Parameter> {
     const response = await fetch(`${API_URL}/parameters/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
     });
     if (!response.ok) {
@@ -39,6 +42,7 @@ export async function updateParameter(id: number, data: UpdateParameterDTO): Pro
 export async function deleteParameter(id: number): Promise<void> {
     const response = await fetch(`${API_URL}/parameters/${id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
     });
     if (!response.ok) {
         throw new Error('Failed to delete parameter');
@@ -51,6 +55,7 @@ export async function uploadParameters(file: File): Promise<void> {
 
     const response = await fetch(`${API_URL}/parameters/upload`, {
         method: 'POST',
+        headers: getAuthHeadersForFormData(),
         body: formData,
     });
 

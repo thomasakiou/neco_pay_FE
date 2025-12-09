@@ -1,9 +1,12 @@
 import { PaymentDTO } from '../types/payment';
+import { getAuthHeaders, getAuthHeadersForFormData } from './apiHelpers';
 
 const API_URL = ''; // Proxy handles the base URL
 
 export const getPayments = async (skip: number = 0, limit: number = 100000): Promise<PaymentDTO[]> => {
-    const response = await fetch(`${API_URL}/payments/?skip=${skip}&limit=${limit}`);
+    const response = await fetch(`${API_URL}/payments/?skip=${skip}&limit=${limit}`, {
+        headers: getAuthHeaders(),
+    });
     if (!response.ok) {
         throw new Error('Failed to fetch payments');
     }
@@ -13,6 +16,7 @@ export const getPayments = async (skip: number = 0, limit: number = 100000): Pro
 export const deletePayment = async (id: number): Promise<void> => {
     const response = await fetch(`${API_URL}/payments/${id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
     });
     if (!response.ok) {
         throw new Error('Failed to delete payment');
@@ -79,6 +83,7 @@ export const uploadPayment = async (file: File): Promise<void> => {
 
                 const response = await fetch(`${API_URL}/payments/upload`, {
                     method: 'POST',
+                    headers: getAuthHeadersForFormData(),
                     body: formData,
                 });
 

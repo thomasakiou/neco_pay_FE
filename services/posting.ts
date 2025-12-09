@@ -1,9 +1,12 @@
 import { Posting, CreatePostingDTO, UpdatePostingDTO, GeneratePaymentDTO } from '../types/posting';
+import { getAuthHeaders, getAuthHeadersForFormData } from './apiHelpers';
 
 const API_URL = ''; // Proxy handles the base URL
 
 export async function getPostings(skip: number = 0, limit: number = 100000): Promise<Posting[]> {
-    const response = await fetch(`${API_URL}/postings/?skip=${skip}&limit=${limit}`);
+    const response = await fetch(`${API_URL}/postings/?skip=${skip}&limit=${limit}`, {
+        headers: getAuthHeaders(),
+    });
     if (!response.ok) {
         throw new Error('Failed to fetch postings');
     }
@@ -13,7 +16,7 @@ export async function getPostings(skip: number = 0, limit: number = 100000): Pro
 export async function createPosting(data: CreatePostingDTO): Promise<Posting> {
     const response = await fetch(`${API_URL}/postings/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
     });
     if (!response.ok) {
@@ -26,7 +29,7 @@ export async function createPosting(data: CreatePostingDTO): Promise<Posting> {
 export async function updatePosting(id: number, data: UpdatePostingDTO): Promise<Posting> {
     const response = await fetch(`${API_URL}/postings/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
     });
     if (!response.ok) {
@@ -39,6 +42,7 @@ export async function updatePosting(id: number, data: UpdatePostingDTO): Promise
 export async function deletePosting(id: number): Promise<void> {
     const response = await fetch(`${API_URL}/postings/${id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
     });
     if (!response.ok) {
         throw new Error('Failed to delete posting');
@@ -51,6 +55,7 @@ export async function uploadPostings(file: File): Promise<void> {
 
     const response = await fetch(`${API_URL}/postings/upload`, {
         method: 'POST',
+        headers: getAuthHeadersForFormData(),
         body: formData,
     });
 
@@ -69,6 +74,7 @@ export async function generatePayments(data: GeneratePaymentDTO): Promise<void> 
 
     const response = await fetch(`${API_URL}/postings/generate?${params}`, {
         method: 'POST',
+        headers: getAuthHeaders(),
     });
 
     if (!response.ok) {

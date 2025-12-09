@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard,
   Users,
@@ -80,8 +81,10 @@ export default function Layout() {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
+    logout();
     navigate('/');
   };
 

@@ -1,4 +1,5 @@
 import { Staff, CreateStaffDTO } from '../types/staff';
+import { getAuthHeaders, getAuthHeadersForFormData } from './apiHelpers';
 
 const API_URL = ''; // Use relative path to leverage Vite proxy
 
@@ -6,9 +7,7 @@ export async function getStaffList(skip: number = 0, limit: number = 100): Promi
     try {
         const response = await fetch(`${API_URL}/staff/?skip=${skip}&limit=${limit}`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: getAuthHeaders(),
         });
 
         if (!response.ok) {
@@ -26,9 +25,7 @@ export async function getStaffList(skip: number = 0, limit: number = 100): Promi
 export async function createStaff(staffData: CreateStaffDTO): Promise<Staff> {
     const response = await fetch(`${API_URL}/staff/`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(staffData),
     });
 
@@ -43,9 +40,7 @@ export async function createStaff(staffData: CreateStaffDTO): Promise<Staff> {
 export async function updateStaff(id: number, staffData: CreateStaffDTO): Promise<Staff> {
     const response = await fetch(`${API_URL}/staff/${id}`, {
         method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(staffData),
     });
 
@@ -63,6 +58,7 @@ export async function uploadStaff(file: File): Promise<void> {
 
     const response = await fetch(`${API_URL}/staff/upload`, {
         method: 'POST',
+        headers: getAuthHeadersForFormData(),
         body: formData,
     });
 
@@ -75,6 +71,7 @@ export async function uploadStaff(file: File): Promise<void> {
 export async function resetPosted(): Promise<void> {
     const response = await fetch(`${API_URL}/staff/reset-posted`, {
         method: 'POST',
+        headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -86,6 +83,7 @@ export async function resetPosted(): Promise<void> {
 export async function deleteStaff(id: number): Promise<void> {
     const response = await fetch(`${API_URL}/staff/${id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
     });
 
     if (!response.ok) {

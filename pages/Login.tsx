@@ -1,13 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, CheckSquare } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/dashboard');
+    setError('');
+    setIsLoading(true);
+
+    try {
+      await login(username, password);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -38,13 +55,23 @@ export default function Login() {
               <p className="text-gray-500">Welcome back! Please enter your details.</p>
             </div>
 
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Username</label>
                 <input
                   type="text"
                   placeholder="Enter your username"
-                  className="w-full h-12 px-4 rounded-lg border-gray-300 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="w-full h-12 px-4 rounded-lg border-gray-300 focus:ring-primary-500 focus:border-primary-500 transition-shadow disabled:bg-gray-100"
                 />
               </div>
 
@@ -52,29 +79,37 @@ export default function Login() {
                 <label className="text-sm font-medium text-gray-700">Password</label>
                 <div className="relative">
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="Enter your password"
-                    className="w-full h-12 px-4 pr-12 rounded-lg border-gray-300 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    className="w-full h-12 px-4 pr-12 rounded-lg border-gray-300 focus:ring-primary-500 focus:border-primary-500 transition-shadow disabled:bg-gray-100"
                   />
-                  <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    <Eye className="w-5 h-5" />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" />
-                  <span className="text-sm text-gray-600">Remember Me</span>
-                </label>
-                <a href="#" className="text-sm font-medium text-primary-600 hover:underline">Forgot Password?</a>
-              </div>
-
               <button
                 type="submit"
-                className="w-full h-12 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors shadow-sm focus:ring-4 focus:ring-primary-100"
+                disabled={isLoading}
+                className="w-full h-12 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 disabled:bg-primary-400 transition-colors shadow-sm focus:ring-4 focus:ring-primary-100 flex items-center justify-center gap-2"
               >
-                Login
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  'Login'
+                )}
               </button>
             </form>
 

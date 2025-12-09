@@ -1,9 +1,12 @@
 import { Bank, CreateBankDTO, UpdateBankDTO } from '../types/banks';
+import { getAuthHeaders, getAuthHeadersForFormData } from './apiHelpers';
 
 const API_URL = ''; // Proxy handles the base URL
 
 export async function getBanks(skip: number = 0, limit: number = 100): Promise<Bank[]> {
-    const response = await fetch(`${API_URL}/banks/?skip=${skip}&limit=${limit}`);
+    const response = await fetch(`${API_URL}/banks/?skip=${skip}&limit=${limit}`, {
+        headers: getAuthHeaders(),
+    });
     if (!response.ok) {
         throw new Error('Failed to fetch banks');
     }
@@ -13,7 +16,7 @@ export async function getBanks(skip: number = 0, limit: number = 100): Promise<B
 export async function createBank(data: CreateBankDTO): Promise<Bank> {
     const response = await fetch(`${API_URL}/banks/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
     });
     if (!response.ok) {
@@ -26,7 +29,7 @@ export async function createBank(data: CreateBankDTO): Promise<Bank> {
 export async function updateBank(id: number, data: UpdateBankDTO): Promise<Bank> {
     const response = await fetch(`${API_URL}/banks/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
     });
     if (!response.ok) {
@@ -39,6 +42,7 @@ export async function updateBank(id: number, data: UpdateBankDTO): Promise<Bank>
 export async function deleteBank(id: number): Promise<void> {
     const response = await fetch(`${API_URL}/banks/${id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
     });
     if (!response.ok) {
         throw new Error('Failed to delete bank');
@@ -51,6 +55,7 @@ export async function uploadBanks(file: File): Promise<void> {
 
     const response = await fetch(`${API_URL}/banks/upload`, {
         method: 'POST',
+        headers: getAuthHeadersForFormData(),
         body: formData,
     });
 
