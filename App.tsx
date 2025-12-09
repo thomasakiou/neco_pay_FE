@@ -10,7 +10,7 @@ import MismatchedRecords from './pages/MismatchedRecords';
 import ValidMatches from './pages/ValidMatches';
 import MissingRecords from './pages/MissingRecords';
 import Configuration from './pages/Configuration';
-import Reports from './pages/Reports';
+import ReportPage from './pages/Report';
 import StagingTable from './pages/StagingTable';
 import Banks from './pages/Banks';
 import States from './pages/States';
@@ -46,7 +46,7 @@ export default function App() {
           <Route path="/payments" element={<PaymentPage />} />
 
           <Route path="/config" element={<Configuration />} />
-          <Route path="/reports" element={<Reports />} />
+          <Route path="/reports" element={<ReportPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

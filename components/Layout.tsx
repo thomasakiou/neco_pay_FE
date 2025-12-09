@@ -158,7 +158,7 @@ export default function Layout() {
               isOpen={openSections.report}
               onToggle={() => toggleSection('report')}
             >
-              <SidebarItem to="/reports" icon={FileBarChart} label="Reports" />
+              <SidebarItem to="/reports" icon={FileBarChart} label="Report" />
             </NavSection>
           </nav>
 

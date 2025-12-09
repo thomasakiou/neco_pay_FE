@@ -176,7 +176,7 @@ export default function PostingPage() {
                     if (codeUpper.includes('HQ')) return 'Minna';
                     // Check specific zone codes
                     if (codeUpper.includes('SS-ZO')) return 'P/Harcourt';
-                    if (codeUpper.includes('SE-ZO')) return 'Uwka';
+                    if (codeUpper.includes('SE-ZO')) return 'Enugu';
                     if (codeUpper.includes('SW-ZO')) return 'Ibadan';
                     if (codeUpper.includes('NC-ZO')) return 'Ilorin';
                     if (codeUpper.includes('NW-ZO')) return 'Kano';
