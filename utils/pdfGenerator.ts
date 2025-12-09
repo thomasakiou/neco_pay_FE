@@ -107,14 +107,14 @@ export const generateBankReport = (payments: PaymentDTO[], title: string = 'Paym
     doc.save(`${safeTitle}_bank_report.pdf`);
 };
 
-export const generateDetailsReport = (payments: PaymentDTO[], title: string = 'Payment Details') => {
+export const generateDetailsReport = (payments: PaymentDTO[], title: string = 'Payment Details', headerText: string = 'NECO POSTING - SSCE 2024 (EXTERNAL) MONITORING EXERCISE') => {
     const doc = new jsPDF({ orientation: 'landscape' });
     const today = new Date().toLocaleDateString('en-GB');
 
     // 1. Header Information
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('NECO POSTING - SSCE 2024 (EXTERNAL) MONITORING EXERCISE', 14, 15);
+    doc.text(headerText.toUpperCase(), 14, 15);
 
     doc.setFontSize(11);
     doc.text(title, 14, 25);
@@ -177,4 +177,96 @@ export const generateDetailsReport = (payments: PaymentDTO[], title: string = 'P
 
     const safeTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
     doc.save(`${safeTitle}_details_report.pdf`);
+};
+
+export const generateSummaryReport = (payments: PaymentDTO[], title: string = 'Payment Summary', headerText: string = 'NECO POSTING - SSCE 2024 (EXTERNAL) MONITORING EXERCISE') => {
+    const doc = new jsPDF();
+
+    // 0. Add Logo
+    const logoPath = '/images/neco.png';
+    doc.addImage(logoPath, 'PNG', 14, 8, 15, 15);
+
+    // 1. Header - NATIONAL EXAMINATIONS COUNCIL
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('NATIONAL EXAMINATIONS COUNCIL', 105, 20, { align: 'center' });
+
+    // 2. Main Title - Use dynamic headerText
+    doc.setFontSize(14);
+    doc.text(headerText.toUpperCase(), 105, 30, { align: 'center' });
+
+    // 3. Subtitle - Payment Title
+    doc.setFontSize(12);
+    doc.text(title, 105, 40, { align: 'center' });
+
+    // 4. Group by Bank and calculate totals
+    const grouped: Record<string, number> = {};
+    payments.forEach(p => {
+        const bankName = p.bank?.trim() || 'Unknown Bank';
+        if (!grouped[bankName]) grouped[bankName] = 0;
+        grouped[bankName] += p.total_netpay || 0;
+    });
+
+    const sortedBanks = Object.keys(grouped).sort();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tableBody: any[] = sortedBanks.map(bank => [
+        bank.toUpperCase(),
+        grouped[bank].toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    ]);
+
+    // Calculate Grand Total
+    const grandTotal = Object.values(grouped).reduce((sum, amount) => sum + amount, 0);
+
+    // Add Subtotal Row (same as grand total, shown before Grand Total row)
+    tableBody.push([
+        '',
+        {
+            content: grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+            styles: { fontStyle: 'bold' }
+        }
+    ]);
+
+    // Add Grand Total Row
+    tableBody.push([
+        {
+            content: 'Grand Total',
+            styles: { fontStyle: 'bold', fontSize: 12, lineWidth: 0 }
+        },
+        {
+            content: grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+            styles: { fontStyle: 'bold', fontSize: 12 }
+        }
+    ]);
+
+    // 5. Generate Table
+    autoTable(doc, {
+        startY: 50,
+        head: [['BANK', 'AMOUNT']],
+        body: tableBody,
+        theme: 'grid',
+        styles: {
+            fontSize: 10,
+            cellPadding: 1.5,
+            lineColor: [0, 0, 0],
+            lineWidth: 0.1,
+            textColor: [0, 0, 0]
+        },
+        headStyles: {
+            fillColor: [255, 255, 255],
+            textColor: [0, 0, 0],
+            lineWidth: 0.1,
+            lineColor: [0, 0, 0],
+            fontStyle: 'bold',
+            fontSize: 11,
+            halign: 'center'
+        },
+        columnStyles: {
+            0: { cellWidth: 120 }, // Bank
+            1: { cellWidth: 60, halign: 'right' } // Amount
+        }
+    });
+
+    const safeTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    doc.save(`${safeTitle}_summary_report.pdf`);
 };

@@ -66,12 +66,12 @@ export default function Layout() {
   const [aiResponse, setAiResponse] = useState('');
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    master: true,
-    payment: true,
-    report: true,
-    validation: true,
-    system: true,
-    tools: true
+    master: false,
+    payment: false,
+    report: false,
+    validation: false,
+    system: false,
+    tools: false
   });
 
   const toggleSection = (section: string) => {
