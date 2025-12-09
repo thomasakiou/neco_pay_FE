@@ -14,7 +14,7 @@ export default function Login() {
     <div className="min-h-screen w-full flex bg-gray-50">
       <div className="flex-grow flex items-center justify-center p-4">
         <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
-          
+
           {/* Left Branding Panel */}
           <div className="hidden md:flex flex-col items-start justify-center p-8 space-y-6">
             <div className="flex items-center gap-4">
@@ -26,7 +26,7 @@ export default function Login() {
             </p>
             <div className="w-full pt-4">
               <div className="aspect-[4/3] w-full rounded-xl bg-gradient-to-br from-primary-100 to-primary-50 border border-primary-100 shadow-sm flex items-center justify-center">
-                <img src="https://picsum.photos/600/400" alt="Finance Abstract" className="rounded-xl opacity-80 mix-blend-multiply" />
+                <img src="/images/neco.png" alt="NECO Logo" className="rounded-xl opacity-80 mix-blend-multiply" />
               </div>
             </div>
           </div>
@@ -41,8 +41,8 @@ export default function Login() {
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Username</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder="Enter your username"
                   className="w-full h-12 px-4 rounded-lg border-gray-300 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
                 />
@@ -51,8 +51,8 @@ export default function Login() {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Password</label>
                 <div className="relative">
-                  <input 
-                    type="password" 
+                  <input
+                    type="password"
                     placeholder="Enter your password"
                     className="w-full h-12 px-4 pr-12 rounded-lg border-gray-300 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
                   />
@@ -70,7 +70,7 @@ export default function Login() {
                 <a href="#" className="text-sm font-medium text-primary-600 hover:underline">Forgot Password?</a>
               </div>
 
-              <button 
+              <button
                 type="submit"
                 className="w-full h-12 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors shadow-sm focus:ring-4 focus:ring-primary-100"
               >
@@ -86,9 +86,9 @@ export default function Login() {
           </div>
         </div>
       </div>
-      
+
       <div className="absolute bottom-4 w-full text-center">
-         <p className="text-xs text-gray-400">© 2024 NECO Payment Management. All Rights Reserved.</p>
+        <p className="text-xs text-gray-400">© 2024 NECO Payment Management. All Rights Reserved.</p>
       </div>
     </div>
   );

@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Data files and temporary scripts
+*.dbf
+*.csv
+*.py
+openapi (*).json

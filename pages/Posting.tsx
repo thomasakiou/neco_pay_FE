@@ -23,6 +23,7 @@ export default function PostingPage() {
     const [paymentTitle, setPaymentTitle] = useState('');
     const [localRuns, setLocalRuns] = useState<number>(0);
     const [numbOfNights, setNumbOfNights] = useState<number>(0);
+    const [tax, setTax] = useState<number>(0);
 
     // Pagination & Sorting
     const [pageSize, setPageSize] = useState(10);
@@ -121,7 +122,7 @@ export default function PostingPage() {
     };
 
     const handleProcess = async () => {
-        if (!paymentTitle || numbOfNights <= 0 || localRuns < 0) {
+        if (!paymentTitle || numbOfNights <= 0 || localRuns < 0 || tax < 0) {
             showToast('Please fill in all fields with valid values', 'error');
             return;
         }
@@ -179,7 +180,7 @@ export default function PostingPage() {
                     if (codeUpper.includes('SW-ZO')) return 'Ibadan';
                     if (codeUpper.includes('NC-ZO')) return 'Ilorin';
                     if (codeUpper.includes('NW-ZO')) return 'Kano';
-                    if (codeUpper.includes('NE-ZO')) return 'Maiduguri';
+                    if (codeUpper.includes('NE-ZO')) return 'Bauchi';
                     // Return original if no mapping found
                     return code;
                 };
@@ -213,8 +214,11 @@ export default function PostingPage() {
                 // Calculate DTA = Amt_per_night * Numb_of_nights
                 const dta = amtPerNight * numbOfNights;
 
-                // Calculate Netpay = Transport + DTA + Local_Runs
-                const netpay = transport + dta + localRuns;
+                // Calculate Netpay with Tax Deduction (Percentage)
+                // Netpay = Gross Pay - (Gross Pay * Tax / 100)
+                const grossPay = transport + dta + localRuns;
+                const taxDeduction = (grossPay * tax) / 100;
+                const netpay = grossPay - taxDeduction;
 
                 return {
                     File_No: posting.file_no || '',
@@ -225,12 +229,13 @@ export default function PostingPage() {
                     Bank: bank,
                     Account_No: accountNo,
                     Transport: transport,
-                    Local_Runs: localRuns,
+                    'fuel-local_runs': localRuns,
                     Numb_of_nights: numbOfNights,
                     Amt_per_night: amtPerNight,
                     DTA: dta,
                     Netpay: netpay,
-                    Payment_Title: paymentTitle
+                    Payment_Title: paymentTitle,
+                    tax: tax
                 };
             });
 
@@ -252,6 +257,7 @@ export default function PostingPage() {
             setPaymentTitle('');
             setLocalRuns(0);
             setNumbOfNights(0);
+            setTax(0);
         } catch (err: any) {
             console.error('CSV generation error:', err);
             showToast(err.message || 'Failed to generate CSV', 'error');
@@ -416,7 +422,7 @@ export default function PostingPage() {
             {/* Process Form */}
             <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                 <h2 className="text-lg font-bold text-gray-900 mb-4">Generate Payments</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Payment Title</label>
                         <input
@@ -428,7 +434,7 @@ export default function PostingPage() {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Local Runs</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Fuel/Local Runs</label>
                         <input
                             type="number"
                             value={localRuns}
@@ -445,6 +451,16 @@ export default function PostingPage() {
                             onChange={(e) => setNumbOfNights(Number(e.target.value))}
                             className="w-full h-11 px-4 rounded-lg border-gray-200 focus:border-primary-500 focus:ring-primary-500 transition-all text-sm"
                             placeholder="0"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tax</label>
+                        <input
+                            type="number"
+                            value={tax}
+                            onChange={(e) => setTax(Number(e.target.value))}
+                            className="w-full h-11 px-4 rounded-lg border-gray-200 focus:border-primary-500 focus:ring-primary-500 transition-all text-sm"
+                            placeholder="0.00"
                         />
                     </div>
                 </div>
