@@ -34,7 +34,8 @@ export const generateBankReport = (payments: PaymentDTO[], title: string = 'Paym
 
         // 3. Table Data
         const bankPayments = grouped[bank];
-        const tableBody = bankPayments.map((p, i) => [
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const tableBody: any[] = bankPayments.map((p, i) => [
             i + 1,
             p.name?.toUpperCase() || '',
             p.bank?.toUpperCase() || '',
@@ -47,11 +48,15 @@ export const generateBankReport = (payments: PaymentDTO[], title: string = 'Paym
 
         // Add Total Row
         tableBody.push([
-            '',
-            '',
-            `Total for : ${bank.toUpperCase()}`,
-            '',
-            totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            {
+                content: `Total for : ${bank.toUpperCase()}`,
+                colSpan: 4,
+                styles: { halign: 'right', fontStyle: 'bold' }
+            },
+            {
+                content: totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+                styles: { fontStyle: 'bold' }
+            }
         ]);
 
         // 4. Generate Table
@@ -80,15 +85,6 @@ export const generateBankReport = (payments: PaymentDTO[], title: string = 'Paym
                 2: { cellWidth: 50 }, // Bank
                 3: { cellWidth: 35 }, // Account No
                 4: { cellWidth: 30, halign: 'right' } // Amount
-            },
-            // Custom styling for the Total row (last row)
-            didParseCell: (data) => {
-                if (data.row.index === tableBody.length - 1) {
-                    data.cell.styles.fontStyle = 'bold';
-                    if (data.column.index === 2) { // "Total for : BANK" label
-                        data.cell.styles.halign = 'right';
-                    }
-                }
             }
         });
 
@@ -109,4 +105,76 @@ export const generateBankReport = (payments: PaymentDTO[], title: string = 'Paym
 
     const safeTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
     doc.save(`${safeTitle}_bank_report.pdf`);
+};
+
+export const generateDetailsReport = (payments: PaymentDTO[], title: string = 'Payment Details') => {
+    const doc = new jsPDF({ orientation: 'landscape' });
+    const today = new Date().toLocaleDateString('en-GB');
+
+    // 1. Header Information
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('NECO POSTING - SSCE 2024 (EXTERNAL) MONITORING EXERCISE', 14, 15);
+
+    doc.setFontSize(11);
+    doc.text(title, 14, 25);
+
+    // 2. Table Data
+    // Column Mapping based on screenshot
+    // S No | Per No | Name | Location | Level | State Posted | No of Nites | Nights (DTA) | Kilo (Transport) | Fuel/Local | Tax | Total
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tableBody: any[] = payments.map((p, i) => [
+        i + 1,
+        p.file_no || '',
+        p.name?.toUpperCase() || '',
+        p.station || '',
+        p.conraiss || '',
+        p.posting || '',
+        p.numb_of_nights || '',
+        p.dta?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00',
+        p.transport?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00',
+        p.fuel_local?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00',
+        p.tax?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00',
+        p.total_netpay?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'
+    ]);
+
+    autoTable(doc, {
+        startY: 30,
+        head: [['S No.', 'Per No', 'Name', 'Location', 'Level', 'State\nPosted', 'No of\nNites', 'Nights', 'Kilo', 'Fuel/\nLocal', 'Tax', 'Total']],
+        body: tableBody,
+        theme: 'plain',
+        styles: {
+            fontSize: 8,
+            cellPadding: 1,
+            lineColor: [0, 0, 0],
+            lineWidth: 0.1,
+            textColor: [0, 0, 0]
+        },
+        headStyles: {
+            fillColor: [255, 255, 255],
+            textColor: [0, 0, 0],
+            lineWidth: 0.1,
+            lineColor: [0, 0, 0],
+            fontStyle: 'bold',
+            valign: 'middle'
+        },
+        columnStyles: {
+            0: { cellWidth: 10 }, // S/No
+            1: { cellWidth: 15 }, // Per No
+            2: { cellWidth: 55 }, // Name
+            3: { cellWidth: 25 }, // Location
+            4: { cellWidth: 12 }, // Level
+            5: { cellWidth: 25 }, // State Posted
+            6: { cellWidth: 15, halign: 'center' }, // No of Nites
+            7: { cellWidth: 25, halign: 'right' }, // Nights (DTA)
+            8: { cellWidth: 25, halign: 'right' }, // Kilo
+            9: { cellWidth: 25, halign: 'right' }, // Fuel/Local
+            10: { cellWidth: 20, halign: 'right' }, // Tax
+            11: { cellWidth: 25, halign: 'right' } // Total
+        }
+    });
+
+    const safeTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    doc.save(`${safeTitle}_details_report.pdf`);
 };

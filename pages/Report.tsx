@@ -4,7 +4,7 @@ import { PaymentDTO } from '../types/payment';
 import PaymentTable from '../components/PaymentTable';
 import { Loader2, RefreshCw } from 'lucide-react';
 import Toast, { ToastType } from '../components/Toast';
-import { generateBankReport } from '../utils/pdfGenerator';
+import { generateBankReport, generateDetailsReport } from '../utils/pdfGenerator';
 
 export default function ReportPage() {
     const [payments, setPayments] = useState<PaymentDTO[]>([]);
@@ -84,11 +84,35 @@ export default function ReportPage() {
                     {generating === 'bank' ? 'Processing...' : 'Bank Report'}
                 </button>
                 <button
-                    onClick={() => console.log('Generate Details Report')}
+                    onClick={() => {
+                        if (!selectedTitle) {
+                            setToast({ message: 'Please select a Payment Title first.', type: 'error' });
+                            return;
+                        }
+                        setGenerating('details');
+                        setTimeout(() => {
+                            try {
+                                const filtered = payments.filter(p => p.payment_title === selectedTitle);
+                                if (filtered.length === 0) {
+                                    setToast({ message: 'No records found for this title.', type: 'error' });
+                                    setGenerating(null);
+                                    return;
+                                }
+                                generateDetailsReport(filtered, selectedTitle);
+                                setToast({ message: 'Details Report generated.', type: 'success' });
+                            } catch (error) {
+                                console.error(error);
+                                setToast({ message: 'Failed to generate report.', type: 'error' });
+                            } finally {
+                                setGenerating(null);
+                            }
+                        }, 100);
+                    }}
                     disabled={!!generating}
-                    className="flex justify-center items-center px-4 py-3 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white rounded-lg font-semibold shadow-sm transition-all"
+                    className="flex justify-center items-center px-4 py-3 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white rounded-lg font-semibold shadow-sm transition-all gap-2"
                 >
-                    Details Report
+                    {generating === 'details' && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {generating === 'details' ? 'Processing...' : 'Details Report'}
                 </button>
                 <button
                     onClick={() => console.log('Generate Summary Report')}
