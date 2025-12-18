@@ -279,7 +279,7 @@ export default function DistancePage() {
                         className="flex-1 sm:flex-none h-12 px-4 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 flex items-center justify-center gap-2 shadow-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                         {isUploading ? <Loader2 className="w-5 h-5 animate-spin text-primary-600" /> : <Upload className="w-5 h-5" />}
-                        {isUploading ? 'Uploading...' : 'Upload CSV'}
+                        {isUploading ? 'Uploading...' : 'Upload DBF'}
                     </button>
                 </div>
             </div>

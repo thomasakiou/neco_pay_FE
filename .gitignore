@@ -28,3 +28,19 @@ dist-ssr
 *.csv
 *.py
 openapi (*).json
+.codersinflow
+.vscode
+.env
+.venv
+.codex
+out
+*.vsix
+.claude
+CLAUDE.md
+.git
+*.tmp
+__pycache__
+*.pyc
+.env.local
+.next
+.github
