@@ -7,9 +7,21 @@ interface PaymentTableProps {
     requireSelection?: boolean;
     selectedTitle?: string;
     onTitleChange?: (title: string) => void;
+    // Selection Props
+    showSelection?: boolean;
+    selectedIds?: Set<number>;
+    onSelectionChange?: (ids: Set<number>) => void;
 }
 
-export default function PaymentTable({ data, requireSelection = false, selectedTitle: controlledTitle, onTitleChange }: PaymentTableProps) {
+export default function PaymentTable({
+    data,
+    requireSelection = false,
+    selectedTitle: controlledTitle,
+    onTitleChange,
+    showSelection = false,
+    selectedIds = new Set(),
+    onSelectionChange
+}: PaymentTableProps) {
     const isControlled = controlledTitle !== undefined;
     const [expandedRowIds, setExpandedRowIds] = useState<Set<number>>(new Set());
     const [internalTitle, setInternalTitle] = useState<string>(requireSelection ? '' : 'All');
@@ -46,7 +58,10 @@ export default function PaymentTable({ data, requireSelection = false, selectedT
 
     const totalPages = Math.ceil(filteredData.length / pageSize);
 
-    const toggleRow = (id: number) => {
+    const toggleRow = (id: number, e: React.MouseEvent) => {
+        // Don't expand if clicking checkbox
+        if ((e.target as HTMLElement).tagName === 'INPUT') return;
+
         const newSet = new Set(expandedRowIds);
         if (newSet.has(id)) {
             newSet.delete(id);
@@ -54,6 +69,30 @@ export default function PaymentTable({ data, requireSelection = false, selectedT
             newSet.add(id);
         }
         setExpandedRowIds(newSet);
+    };
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!onSelectionChange) return;
+        if (e.target.checked) {
+            const newSelected = new Set(selectedIds);
+            filteredData.forEach(row => newSelected.add(row.id));
+            onSelectionChange(newSelected);
+        } else {
+            const newSelected = new Set(selectedIds);
+            filteredData.forEach(row => newSelected.delete(row.id));
+            onSelectionChange(newSelected);
+        }
+    };
+
+    const handleSelectRow = (id: number) => {
+        if (!onSelectionChange) return;
+        const newSelected = new Set(selectedIds);
+        if (newSelected.has(id)) {
+            newSelected.delete(id);
+        } else {
+            newSelected.add(id);
+        }
+        onSelectionChange(newSelected);
     };
 
     return (
@@ -84,6 +123,16 @@ export default function PaymentTable({ data, requireSelection = false, selectedT
                 <table className="w-full text-left text-sm">
                     <thead className="bg-gray-100 border-b border-gray-200">
                         <tr>
+                            {showSelection && (
+                                <th className="w-12 px-6 py-3">
+                                    <input
+                                        type="checkbox"
+                                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                        checked={filteredData.length > 0 && filteredData.every(row => selectedIds?.has(row.id))}
+                                        onChange={handleSelectAll}
+                                    />
+                                </th>
+                            )}
                             <th className="w-10 px-4 py-3"></th>
                             <th className="px-6 py-3 font-semibold text-gray-700">File No</th>
                             <th className="px-6 py-3 font-semibold text-gray-700">Name</th>
@@ -96,9 +145,20 @@ export default function PaymentTable({ data, requireSelection = false, selectedT
                         {paginatedData.map((row) => (
                             <React.Fragment key={row.id}>
                                 <tr
-                                    className="hover:bg-gray-50 cursor-pointer transition-colors"
-                                    onClick={() => toggleRow(row.id)}
+                                    className={`hover:bg-gray-50 cursor-pointer transition-colors ${showSelection && selectedIds?.has(row.id) ? 'bg-blue-50/50' : ''}`}
+                                    onClick={(e) => toggleRow(row.id, e)}
                                 >
+                                    {showSelection && (
+                                        <td className="px-6 py-3">
+                                            <input
+                                                type="checkbox"
+                                                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                                checked={selectedIds?.has(row.id)}
+                                                onChange={() => handleSelectRow(row.id)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        </td>
+                                    )}
                                     <td className="px-4 py-3 text-center text-gray-400">
                                         {expandedRowIds.has(row.id) ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                                     </td>
@@ -110,7 +170,7 @@ export default function PaymentTable({ data, requireSelection = false, selectedT
                                 </tr>
                                 {expandedRowIds.has(row.id) && (
                                     <tr className="bg-gray-50/50">
-                                        <td colSpan={6} className="px-6 py-4 border-t border-gray-100 shadow-inner">
+                                        <td colSpan={showSelection ? 7 : 6} className="px-6 py-4 border-t border-gray-100 shadow-inner">
                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
                                                 <div className="space-y-2">
                                                     <h4 className="font-semibold text-gray-900 border-b border-gray-200 pb-1 mb-2">Staff Details</h4>
@@ -141,7 +201,7 @@ export default function PaymentTable({ data, requireSelection = false, selectedT
                         ))}
                         {paginatedData.length === 0 && (
                             <tr>
-                                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">No payment records found matching the filter.</td>
+                                <td colSpan={showSelection ? 7 : 6} className="px-6 py-12 text-center text-gray-500">No payment records found matching the filter.</td>
                             </tr>
                         )}
                     </tbody>

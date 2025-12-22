@@ -4,11 +4,15 @@ import { PaymentDTO } from '../types/payment';
 export const generateExcelReport = (payments: PaymentDTO[], title: string = 'Payment Report') => {
     // Map payment data to Excel rows with specific column names
     const data = payments.map(p => ({
-        'Iname': p.name || '',
-        'Ilocation': p.station || '',
-        'Ibank': p.bank || '',
-        'Iaccount': p.account_numb || '',
-        'Inetpay': p.total_netpay || 0
+        'Name': p.name || '',
+        'Per No': p.file_no || '',
+        'Location': p.station || '',
+        'Bank': p.bank || '',
+        'Account': p.account_numb || '',
+        'Fuel/Local': p.fuel_local || 0,
+        'Transport': p.transport || 0,
+        'DTA': p.dta || 0,
+        'Netpay': p.total_netpay || 0
     }));
 
     // Create workbook and worksheet

@@ -47,6 +47,19 @@ export default function PostingPage() {
         setToast({ message, type });
     };
 
+    const normalizeKey = (key: string): string => {
+        const lower = key.trim().toLowerCase();
+        if (lower === 'file no' || lower === 'file_no' || lower === 'per no' || lower === 'per_no' || lower === 'staff_per_no' || lower === 'staff per no') return 'file_no';
+        if (lower === 'name' || lower === 'fullname' || lower === 'full name') return 'name';
+        if (lower === 'conraiss' || lower === 'level' || lower === 'grade') return 'conraiss';
+        if (lower === 'station' || lower === 'location' || lower === 'current station') return 'station';
+        if (lower === 'posting' || lower === 'posted to' || lower === 'state posted') return 'posting';
+        if (lower === 'category') return 'category';
+        if (lower === 'rank') return 'rank';
+        if (lower === 'mandate') return 'mandate';
+        return lower;
+    };
+
     const fetchData = async () => {
         try {
             setLoading(true);
@@ -77,15 +90,27 @@ export default function PostingPage() {
                 const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
 
                 // Map keys
-                const mappedData: Posting[] = jsonData.map((row, index) => ({
-                    id: index + 1, // Temp ID
-                    file_no: row['FILE NO'] || row['File No'] || '',
-                    name: row['NAME'] || row['Name'] || '',
-                    conraiss: row['CONRAISS'] || row['Conraiss'] || '',
-                    station: row['STATION'] || row['Station'] || '',
-                    posting: row['Posted To'] || row['Posting'] || '',
-                    active: true
-                }));
+                const mappedData: Posting[] = jsonData.map((row, index) => {
+                    const mapped: any = { id: index + 1, active: true };
+                    Object.keys(row).forEach(key => {
+                        const normalized = normalizeKey(key);
+                        mapped[normalized] = row[key];
+                    });
+
+                    // Fallback for fields that might be missing or under different names not caught by normalizeKey
+                    return {
+                        id: mapped.id,
+                        file_no: mapped.file_no || '',
+                        name: mapped.name || '',
+                        conraiss: mapped.conraiss || '',
+                        station: mapped.station || '',
+                        posting: mapped.posting || '',
+                        category: mapped.category || '',
+                        rank: mapped.rank || '',
+                        mandate: mapped.mandate || '',
+                        active: true
+                    };
+                });
 
                 setAllData(mappedData);
                 setStagedFile(file);
@@ -205,8 +230,8 @@ export default function PostingPage() {
                 });
                 const kilometer = parameterRecord?.kilometer || 0;
 
-                // Calculate Transport = distance.distance * parameter.kilometer
-                const transport = dist * kilometer;
+                // Calculate Transport = distance.distance * parameter.kilometer * 2
+                const transport = dist * kilometer * 2;
 
                 // Calculate Amt_per_night from parameter.pernight
                 const amtPerNight = parameterRecord?.pernight || 0;
@@ -221,21 +246,22 @@ export default function PostingPage() {
                 const netpay = grossPay - taxDeduction;
 
                 return {
-                    File_No: posting.file_no || '',
-                    Name: posting.name || '',
-                    Conraiss: posting.conraiss || '',
-                    Station: posting.station || '',
-                    Posting: posting.posting || '',
-                    Bank: bank,
-                    Account_No: accountNo,
-                    Transport: transport,
-                    'fuel-local_runs': localRuns,
-                    Numb_of_nights: numbOfNights,
-                    Amt_per_night: amtPerNight,
-                    DTA: dta,
-                    Netpay: netpay,
-                    Payment_Title: paymentTitle,
-                    tax: tax
+                    'File No': posting.file_no || '',
+                    'Name': posting.name || '',
+                    'Conraiss': posting.conraiss || '',
+                    'Station': posting.station || '',
+                    'Posting': posting.posting || '',
+                    'Bank': bank,
+                    'Account No': accountNo,
+                    'Transport': transport,
+                    'Fuel/Local': localRuns,
+                    'Number of Nights': numbOfNights,
+                    'Amount per Night': amtPerNight,
+                    'DTA': dta,
+                    'Gross Total': grossPay,
+                    'Tax': tax,
+                    'Netpay': netpay,
+                    'Payment Title': paymentTitle
                 };
             });
 
@@ -330,11 +356,11 @@ export default function PostingPage() {
     const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.checked) {
             const newSelected = new Set(selectedIds);
-            paginatedData.forEach(row => newSelected.add(row.id));
+            sortedData.forEach(row => newSelected.add(row.id));
             setSelectedIds(newSelected);
         } else {
             const newSelected = new Set(selectedIds);
-            paginatedData.forEach(row => newSelected.delete(row.id));
+            sortedData.forEach(row => newSelected.delete(row.id));
             setSelectedIds(newSelected);
         }
     };
@@ -558,7 +584,7 @@ export default function PostingPage() {
                                         <input
                                             type="checkbox"
                                             className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                                            checked={paginatedData.length > 0 && paginatedData.every(row => selectedIds.has(row.id))}
+                                            checked={sortedData.length > 0 && sortedData.every(row => selectedIds.has(row.id))}
                                             onChange={handleSelectAll}
                                         />
                                     </th>
