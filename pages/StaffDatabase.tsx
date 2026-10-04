@@ -53,7 +53,8 @@ export default function StaffDatabase() {
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dbfFileInputRef = useRef<HTMLInputElement>(null);
+  const csvFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchData();
@@ -76,8 +77,12 @@ export default function StaffDatabase() {
     }
   };
 
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
+  const handleDbfUploadClick = () => {
+    dbfFileInputRef.current?.click();
+  };
+
+  const handleCsvUploadClick = () => {
+    csvFileInputRef.current?.click();
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,16 +91,17 @@ export default function StaffDatabase() {
 
     try {
       setIsUploading(true);
-      await uploadStaff(file);
+      const result = await uploadStaff(file);
       // Refresh data after upload
       await fetchData();
-      showToast('Staff data imported successfully!', 'success');
+      showToast(`Processed ${result.total} records: ${result.new_count} new, ${result.updated_count} updated`, 'success');
     } catch (err: any) {
       showToast(err.message || 'Failed to import staff data', 'error');
     } finally {
       setIsUploading(false);
       // Reset input
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (dbfFileInputRef.current) dbfFileInputRef.current.value = '';
+      if (csvFileInputRef.current) csvFileInputRef.current.value = '';
     }
   };
 
@@ -319,13 +325,29 @@ export default function StaffDatabase() {
           </button>
           <input
             type="file"
-            ref={fileInputRef}
+            ref={csvFileInputRef}
             className="hidden"
-            accept=".csv,.xlsx,.xls,.dbf"
+            accept=".csv,.xlsx,.xls"
             onChange={handleFileChange}
           />
           <button
-            onClick={handleUploadClick}
+            onClick={handleCsvUploadClick}
+            disabled={isUploading}
+            className="flex-1 sm:flex-none h-12 px-4 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 flex items-center justify-center gap-2 shadow-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {isUploading ? <Loader2 className="w-5 h-5 animate-spin text-primary-600" /> : <Upload className="w-5 h-5" />}
+            {isUploading ? 'Uploading...' : 'Upload CSV'}
+          </button>
+
+          <input
+            type="file"
+            ref={dbfFileInputRef}
+            className="hidden"
+            accept=".dbf"
+            onChange={handleFileChange}
+          />
+          <button
+            onClick={handleDbfUploadClick}
             disabled={isUploading}
             className="flex-1 sm:flex-none h-12 px-4 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 flex items-center justify-center gap-2 shadow-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           >

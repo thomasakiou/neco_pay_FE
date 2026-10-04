@@ -128,7 +128,7 @@ export default function Layout() {
 
 
             <NavSection
-              label="Meta Data (DBF)"
+              label="Master Data"
               isOpen={openSections.master}
               onToggle={() => toggleSection('master')}
             >

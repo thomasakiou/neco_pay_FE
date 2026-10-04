@@ -52,7 +52,7 @@ export async function updateStaff(id: number, staffData: CreateStaffDTO): Promis
     return response.json();
 }
 
-export async function uploadStaff(file: File): Promise<void> {
+export async function uploadStaff(file: File): Promise<{ message: string; new_count: number; updated_count: number; total: number }> {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -66,6 +66,8 @@ export async function uploadStaff(file: File): Promise<void> {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail ? JSON.stringify(errorData.detail) : `Error uploading staff: ${response.statusText}`);
     }
+
+    return response.json();
 }
 
 export async function resetPosted(): Promise<void> {
