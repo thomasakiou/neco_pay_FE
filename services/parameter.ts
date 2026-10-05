@@ -3,6 +3,12 @@ import { getAuthHeaders, getAuthHeadersForFormData } from './apiHelpers';
 
 const API_URL = ''; // Proxy handles the base URL
 
+export interface UploadParametersResult {
+    message: string;
+    created_count: number;
+    updated_count: number;
+}
+
 export async function getParameters(skip: number = 0, limit: number = 100): Promise<Parameter[]> {
     const response = await fetch(`${API_URL}/parameters/?skip=${skip}&limit=${limit}`, {
         headers: getAuthHeaders(),
@@ -49,7 +55,7 @@ export async function deleteParameter(id: number): Promise<void> {
     }
 }
 
-export async function uploadParameters(file: File): Promise<void> {
+export async function uploadParameters(file: File): Promise<UploadParametersResult> {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -63,4 +69,5 @@ export async function uploadParameters(file: File): Promise<void> {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail ? JSON.stringify(errorData.detail) : 'Failed to upload parameters');
     }
+    return response.json();
 }

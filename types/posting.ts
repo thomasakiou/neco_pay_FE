@@ -6,6 +6,8 @@ export interface Posting {
     conraiss?: string | null;
     station?: string | null;
     posting?: string | null;
+    no_of_nights?: number | null;
+    batch_name?: string | null;
     category?: string | null;
     rank?: string | null;
     mandate?: string | null;
@@ -20,6 +22,7 @@ export interface CreatePostingDTO {
     conraiss?: string | null;
     station?: string | null;
     posting?: string | null;
+    no_of_nights?: number | null;
     category?: string | null;
     rank?: string | null;
     mandate?: string | null;

@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { getPayments } from '../services/payment';
 import { PaymentDTO } from '../types/payment';
 import PaymentTable from '../components/PaymentTable';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { ChevronDown, Loader2, RefreshCw } from 'lucide-react';
 import Toast, { ToastType } from '../components/Toast';
-import { generateBankReport, generateDetailsReport, generateSummaryReport } from '../utils/pdfGenerator';
+import { ALL_REPORT_FIELDS, generateBankReport, generateDetailsReport, generateSummaryReport } from '../utils/pdfGenerator';
 import { generateExcelReport } from '../utils/excelGenerator';
 
 export default function ReportPage() {
@@ -14,6 +14,18 @@ export default function ReportPage() {
     const [selectedTitle, setSelectedTitle] = useState<string>('');
     const [reportHeader, setReportHeader] = useState<string>('NECO POSTING - SSCE 2024 (EXTERNAL) MONITORING EXERCISE');
     const [generating, setGenerating] = useState<string | null>(null);
+    const [showFieldSelector, setShowFieldSelector] = useState(false);
+    const [visibleFields, setVisibleFields] = useState<Set<string>>(() => new Set(ALL_REPORT_FIELDS.map(f => f.key)));
+
+    const toggleField = (key: string) => {
+        setVisibleFields(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key); else next.add(key);
+            return next;
+        });
+    };
+
+    const activeFields = ALL_REPORT_FIELDS.map(f => f.key).filter(k => visibleFields.has(k));
 
     const fetchData = async () => {
         try {
@@ -87,6 +99,38 @@ export default function ReportPage() {
                     />
                 </div>
 
+                {/* Field Selector */}
+                <div className="border border-gray-200 rounded-lg">
+                    <button
+                        onClick={() => setShowFieldSelector(v => !v)}
+                        className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg"
+                    >
+                        <span>Report Columns <span className="text-gray-400 font-normal">({visibleFields.size} of {ALL_REPORT_FIELDS.length} selected)</span></span>
+                        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showFieldSelector ? 'rotate-180' : ''}`} />
+                    </button>
+                    {showFieldSelector && (
+                        <div className="px-4 pb-3 border-t border-gray-100">
+                            <div className="flex gap-3 mt-2 mb-3">
+                                <button onClick={() => setVisibleFields(new Set(ALL_REPORT_FIELDS.map(f => f.key)))} className="text-xs text-primary-600 hover:underline">Select all</button>
+                                <button onClick={() => setVisibleFields(new Set())} className="text-xs text-gray-500 hover:underline">Clear all</button>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                {ALL_REPORT_FIELDS.map(f => (
+                                    <label key={f.key} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={visibleFields.has(f.key)}
+                                            onChange={() => toggleField(f.key)}
+                                            className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                        />
+                                        {f.label}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <button
                         onClick={handleGenerateBankReport}
@@ -111,7 +155,7 @@ export default function ReportPage() {
                                         setGenerating(null);
                                         return;
                                     }
-                                    generateDetailsReport(filtered, selectedTitle, reportHeader);
+                                    generateDetailsReport(filtered, selectedTitle, reportHeader, activeFields);
                                     setToast({ message: 'Details Report generated.', type: 'success' });
                                 } catch (error) {
                                     console.error(error);
@@ -173,7 +217,7 @@ export default function ReportPage() {
                                         setGenerating(null);
                                         return;
                                     }
-                                    generateExcelReport(filtered, selectedTitle);
+                                    generateExcelReport(filtered, selectedTitle, activeFields);
                                     setToast({ message: 'Excel Report generated.', type: 'success' });
                                 } catch (error) {
                                     console.error(error);

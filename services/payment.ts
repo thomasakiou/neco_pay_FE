@@ -33,7 +33,9 @@ const normalizeHeaders = (headers: any[]): string[] => {
         if (lower === 'account no' || lower === 'account_no' || lower === 'account_numb' || lower === 'account number' || lower === 'account') return 'account_numb';
         if (lower === 'bank' || lower === 'bank name') return 'bank';
         if (lower === 'payment_title' || lower === 'payment title' || lower === 'title') return 'payment_title';
-        if (lower === 'fuel-local_runs' || lower === 'fuel_local' || lower === 'fuel local' || lower === 'fuel' || lower === 'fuel/local') return 'fuel_local';
+        if (lower === 'fuel') return 'fuel';
+        if (lower === 'local runs' || lower === 'local_runs') return 'local_runs';
+        if (lower === 'fuel-local_runs' || lower === 'fuel_local' || lower === 'fuel local' || lower === 'fuel/local') return 'fuel_local';
         if (lower === 'file no' || lower === 'file_no' || lower === 'per no' || lower === 'per_no' || lower === 'staff_per_no' || lower === 'staff per no') return 'file_no';
         if (lower === 'name' || lower === 'staff name' || lower === 'fullname' || lower === 'full name') return 'name';
         if (lower === 'conraiss' || lower === 'level' || lower === 'grade') return 'conraiss';
@@ -169,4 +171,3 @@ export const uploadPayment = async (file: File): Promise<void> => {
         reader.readAsArrayBuffer(file);
     });
 };
-

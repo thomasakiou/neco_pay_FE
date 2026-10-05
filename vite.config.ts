@@ -93,6 +93,10 @@ export default defineConfig(({ mode }) => {
           target: 'http://localhost:8000',
           changeOrigin: true,
         },
+        '/location-mappings': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+        },
         '/payments': {
           target: 'http://localhost:8000',
           changeOrigin: true,
@@ -115,4 +119,3 @@ export default defineConfig(({ mode }) => {
     }
   };
 });
-

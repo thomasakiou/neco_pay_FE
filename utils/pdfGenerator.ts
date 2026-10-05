@@ -2,6 +2,26 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { PaymentDTO } from '../types/payment';
 
+export interface ReportField {
+    key: string;
+    label: string;
+}
+
+export const ALL_REPORT_FIELDS: ReportField[] = [
+    { key: 'sno',           label: 'S No.' },
+    { key: 'file_no',       label: 'Per No' },
+    { key: 'name',          label: 'Name' },
+    { key: 'station',       label: 'Location' },
+    { key: 'conraiss',      label: 'Level' },
+    { key: 'posting',       label: 'State Posted' },
+    { key: 'numb_of_nights',label: 'No of Nites' },
+    { key: 'dta',           label: 'Nights (DTA)' },
+    { key: 'transport',     label: 'Kilo (Transport)' },
+    { key: 'fuel_local',    label: 'Fuel/Local' },
+    { key: 'tax',           label: 'Tax' },
+    { key: 'total_netpay',  label: 'Total' },
+];
+
 export const generateBankReport = (payments: PaymentDTO[], title: string = 'Payment Schedule') => {
     const doc = new jsPDF();
     const today = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY format roughly
@@ -107,7 +127,7 @@ export const generateBankReport = (payments: PaymentDTO[], title: string = 'Paym
     doc.save(`${safeTitle}_bank_report.pdf`);
 };
 
-export const generateDetailsReport = (payments: PaymentDTO[], title: string = 'Payment Details', headerText: string = 'NECO POSTING - SSCE 2024 (EXTERNAL) MONITORING EXERCISE') => {
+export const generateDetailsReport = (payments: PaymentDTO[], title: string = 'Payment Details', headerText: string = 'NECO POSTING - SSCE 2024 (EXTERNAL) MONITORING EXERCISE', activeFields: string[] = ALL_REPORT_FIELDS.map(f => f.key)) => {
     const doc = new jsPDF({ orientation: 'landscape' });
     const today = new Date().toLocaleDateString('en-GB');
 
@@ -119,60 +139,61 @@ export const generateDetailsReport = (payments: PaymentDTO[], title: string = 'P
     doc.setFontSize(11);
     doc.text(title, 14, 25);
 
-    // 2. Table Data
-    // Column Mapping based on screenshot
-    // S No | Per No | Name | Location | Level | State Posted | No of Nites | Nights (DTA) | Kilo (Transport) | Fuel/Local | Tax | Total
+    // 2. Build columns based on activeFields
+    type ColDef = { key: string; header: string; width: number; halign?: 'left' | 'center' | 'right' };
+    const allCols: ColDef[] = [
+        { key: 'sno',            header: 'S No.',          width: 10 },
+        { key: 'file_no',        header: 'Per No',         width: 15 },
+        { key: 'name',           header: 'Name',           width: 55 },
+        { key: 'station',        header: 'Location',       width: 25 },
+        { key: 'conraiss',       header: 'Level',          width: 12 },
+        { key: 'posting',        header: 'State\nPosted',  width: 25 },
+        { key: 'numb_of_nights', header: 'No of\nNites',  width: 15, halign: 'center' },
+        { key: 'dta',            header: 'Nights',         width: 25, halign: 'right' },
+        { key: 'transport',      header: 'Kilo',           width: 25, halign: 'right' },
+        { key: 'fuel_local',     header: 'Fuel/\nLocal',  width: 25, halign: 'right' },
+        { key: 'tax',            header: 'Tax',            width: 20, halign: 'right' },
+        { key: 'total_netpay',   header: 'Total',          width: 25, halign: 'right' },
+    ];
+    const cols = allCols.filter(c => activeFields.includes(c.key));
+
+    const fmt = (v?: number | null) => v?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? '0.00';
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const tableBody: any[] = payments.map((p, i) => [
-        i + 1,
-        p.file_no || '',
-        p.name?.toUpperCase() || '',
-        p.station || '',
-        p.conraiss || '',
-        p.posting || '',
-        p.numb_of_nights || '',
-        p.dta?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00',
-        p.transport?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00',
-        p.fuel_local?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00',
-        p.tax?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00',
-        p.total_netpay?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'
-    ]);
+    const tableBody: any[] = payments.map((p, i) =>
+        cols.map(c => {
+            switch (c.key) {
+                case 'sno':            return i + 1;
+                case 'file_no':        return p.file_no || '';
+                case 'name':           return p.name?.toUpperCase() || '';
+                case 'station':        return p.station || '';
+                case 'conraiss':       return p.conraiss || '';
+                case 'posting':        return p.posting || '';
+                case 'numb_of_nights': return p.numb_of_nights || '';
+                case 'dta':            return fmt(p.dta);
+                case 'transport':      return fmt(p.transport);
+                case 'fuel_local':     return fmt(p.fuel_local);
+                case 'tax':            return fmt(p.tax);
+                case 'total_netpay':   return fmt(p.total_netpay);
+                default:               return '';
+            }
+        })
+    );
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const columnStyles: Record<number, any> = {};
+    cols.forEach((c, idx) => {
+        columnStyles[idx] = { cellWidth: c.width, ...(c.halign ? { halign: c.halign } : {}) };
+    });
 
     autoTable(doc, {
         startY: 30,
-        head: [['S No.', 'Per No', 'Name', 'Location', 'Level', 'State\nPosted', 'No of\nNites', 'Nights', 'Kilo', 'Fuel/\nLocal', 'Tax', 'Total']],
+        head: [cols.map(c => c.header)],
         body: tableBody,
         theme: 'plain',
-        styles: {
-            fontSize: 8,
-            cellPadding: 1,
-            lineColor: [0, 0, 0],
-            lineWidth: 0.1,
-            textColor: [0, 0, 0]
-        },
-        headStyles: {
-            fillColor: [255, 255, 255],
-            textColor: [0, 0, 0],
-            lineWidth: 0.1,
-            lineColor: [0, 0, 0],
-            fontStyle: 'bold',
-            valign: 'middle'
-        },
-        columnStyles: {
-            0: { cellWidth: 10 }, // S/No
-            1: { cellWidth: 15 }, // Per No
-            2: { cellWidth: 55 }, // Name
-            3: { cellWidth: 25 }, // Location
-            4: { cellWidth: 12 }, // Level
-            5: { cellWidth: 25 }, // State Posted
-            6: { cellWidth: 15, halign: 'center' }, // No of Nites
-            7: { cellWidth: 25, halign: 'right' }, // Nights (DTA)
-            8: { cellWidth: 25, halign: 'right' }, // Kilo
-            9: { cellWidth: 25, halign: 'right' }, // Fuel/Local
-            10: { cellWidth: 20, halign: 'right' }, // Tax
-            11: { cellWidth: 25, halign: 'right' } // Total
-        }
+        styles: { fontSize: 8, cellPadding: 1, lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0] },
+        headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], lineWidth: 0.1, lineColor: [0, 0, 0], fontStyle: 'bold', valign: 'middle' },
+        columnStyles,
     });
 
     const safeTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();

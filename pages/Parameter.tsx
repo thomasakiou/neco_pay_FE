@@ -34,13 +34,15 @@ export default function ParameterPage() {
         setToast({ message, type });
     };
 
-    const fetchData = async () => {
+    const fetchData = async (): Promise<boolean> => {
         try {
             setLoading(true);
             const result = await getParameters(0, 10000);
             setAllData(result);
+            return true;
         } catch (err) {
             showToast('Failed to load parameter data.', 'error');
+            return false;
         } finally {
             setLoading(false);
         }
@@ -56,9 +58,12 @@ export default function ParameterPage() {
 
         try {
             setIsUploading(true);
-            await uploadParameters(file);
-            await fetchData();
-            showToast('Parameters imported successfully!', 'success');
+            const result = await uploadParameters(file);
+            const refreshed = await fetchData();
+            showToast(
+                refreshed ? result.message : 'Upload completed, but failed to refresh parameter data.',
+                refreshed ? 'success' : 'error'
+            );
         } catch (err: any) {
             showToast(err.message || 'Failed to import parameters', 'error');
         } finally {
