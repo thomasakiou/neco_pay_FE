@@ -19,9 +19,33 @@ export const processExcelFile = (file: File): Promise<ProcessedExcelResult> => {
             const states = await getStates(0, 1000);
             states.forEach(s => {
                 if (s.state && s.capital) {
-                    stateMap[s.state.toLowerCase()] = s.capital;
+                    const cap = s.capital;
+                    // state name variants: exact, hyphen↔space normalised
+                    const nameVariants = [
+                        s.state.toLowerCase(),
+                        s.state.toLowerCase().replace(/-/g, ' '),
+                        s.state.toLowerCase().replace(/ /g, '-'),
+                    ];
+                    nameVariants.forEach(v => { stateMap[v] = cap; });
+                    // state code
+                    if (s.code) stateMap[s.code.toLowerCase()] = cap;
+                    // capital itself maps to itself
+                    stateMap[cap.toLowerCase()] = cap;
                 }
             });
+            // hard-coded aliases that commonly appear in Excel files
+            const aliases: Record<string, string> = {
+                'fct':                       'Abuja',
+                'abuja':                     'Abuja',
+                'fct abuja':                 'Abuja',
+                'federal capital territory': 'Abuja',
+                'cross river':               stateMap['cross river'] || 'Calabar',
+                'cross-river':               stateMap['cross river'] || 'Calabar',
+                'crossriver':                stateMap['cross river'] || 'Calabar',
+                'akwa ibom':                 stateMap['akwa ibom'] || 'Uyo',
+                'akwa-ibom':                 stateMap['akwa ibom'] || 'Uyo',
+            };
+            Object.assign(stateMap, aliases);
         } catch (err) {
             console.warn("Failed to load states for mapping:", err);
         }

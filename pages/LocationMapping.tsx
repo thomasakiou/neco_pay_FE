@@ -3,11 +3,14 @@ import { Link } from 'react-router-dom';
 import { Loader2, Save, RefreshCw, MapPin } from 'lucide-react';
 import { getPostings } from '../services/posting';
 import { getDistances } from '../services/distance';
+import { getStates } from '../services/states';
 import { deleteLocationMapping, getLocationMappings, saveLocationMapping } from '../services/locationMapping';
 import { Distance } from '../types/distance';
+import { State } from '../types/state';
 import { LocationFieldType, LocationMapping } from '../types/locationMapping';
 import { Posting } from '../types/posting';
 import Toast, { ToastType } from '../components/Toast';
+import { isOfficeLocationCode, resolveLocation } from '../utils/resolveLocation';
 
 interface MappingRow {
     fieldType: LocationFieldType;
@@ -31,6 +34,7 @@ const normalize = (value: string) => value.trim().toLocaleLowerCase();
 export default function LocationMappingPage() {
     const [postings, setPostings] = useState<Posting[]>([]);
     const [distances, setDistances] = useState<Distance[]>([]);
+    const [states, setStates] = useState<State[]>([]);
     const [mappings, setMappings] = useState<LocationMapping[]>([]);
     const [drafts, setDrafts] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
@@ -42,13 +46,15 @@ export default function LocationMappingPage() {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [postingRows, distanceRows, mappingRows] = await Promise.all([
+            const [postingRows, distanceRows, stateRows, mappingRows] = await Promise.all([
                 getPostings(0, 10000),
                 getDistances(0, 100000),
+                getStates(0, 10000),
                 getLocationMappings(),
             ]);
             setPostings(postingRows);
             setDistances(distanceRows);
+            setStates(stateRows);
             setMappings(mappingRows);
         } catch (error) {
             showToast(error instanceof Error ? error.message : 'Failed to load location mapping data.', 'error');
@@ -94,12 +100,16 @@ export default function LocationMappingPage() {
             const exact = options.find(option => normalize(option) === normalize(originalValue));
             const suffix = originalValue.includes('|') ? originalValue.split('|').at(-1)?.trim() : undefined;
             const suffixMatch = suffix && options.find(option => normalize(option) === normalize(suffix));
-            const suggestion = savedMapping?.canonical_value || exact || suffixMatch;
+            const side = fieldType === 'station' ? 'source' : 'target';
+            const automatic = isOfficeLocationCode(originalValue)
+                ? options.find(option => normalize(option) === normalize(resolveLocation(originalValue, states, distances, side)))
+                : undefined;
+            const suggestion = automatic || savedMapping?.canonical_value || exact || suffixMatch;
             return { fieldType, originalValue, savedMapping, suggestion };
         }).sort((left, right) =>
             left.fieldType.localeCompare(right.fieldType) || left.originalValue.localeCompare(right.originalValue)
         );
-    }, [postings, mappings, sourceOptions, targetOptions]);
+    }, [postings, mappings, sourceOptions, targetOptions, states, distances]);
 
     const resolvedRoutes = useMemo(() => {
         const mappingByKey = new Map(mappings.map(mapping => [
@@ -112,8 +122,14 @@ export default function LocationMappingPage() {
             const station = posting.station?.trim() || '';
             const postedTo = posting.posting?.trim() || '';
             if (!station || !postedTo) continue;
-            const source = mappingByKey.get(mappingKey('station', station)) || station;
-            const target = mappingByKey.get(mappingKey('posted_to', postedTo)) || postedTo;
+            const sourceMapping = mappingByKey.get(mappingKey('station', station));
+            const targetMapping = mappingByKey.get(mappingKey('posted_to', postedTo));
+            const source = isOfficeLocationCode(station)
+                ? resolveLocation(station, states, distances, 'source')
+                : sourceMapping || station;
+            const target = isOfficeLocationCode(postedTo)
+                ? resolveLocation(postedTo, states, distances, 'target')
+                : targetMapping || postedTo;
             const key = `${normalize(source)}|${normalize(target)}`;
             const existing = routeCounts.get(key);
             if (existing) {
@@ -131,7 +147,7 @@ export default function LocationMappingPage() {
             a.station.localeCompare(b.station) ||
             a.postedTo.localeCompare(b.postedTo)
         );
-    }, [postings, distances, mappings]);
+    }, [postings, distances, mappings, states]);
 
     const handleSave = async (row: MappingRow) => {
         const key = mappingKey(row.fieldType, row.originalValue);
@@ -195,7 +211,7 @@ export default function LocationMappingPage() {
             </div>
 
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-                Map <strong>Station</strong> to a Distance <strong>Source</strong>, and <strong>Posted To</strong> to a Distance <strong>Target</strong>. Values after a <code>|</code> are suggested only when they match a location in the corresponding Distance field. Review and save the mapping; Transport is then calculated from the matched route and the staff Kilometer rate.
+                <strong>HQ-*</strong> stations are automatically resolved to <strong>Minna</strong> or <strong>Minna (HQ)</strong>, and zonal office codes are resolved to their office city/capital. For other values, map <strong>Station</strong> to a Distance <strong>Source</strong> and <strong>Posted To</strong> to a Distance <strong>Target</strong>; text after a <code>|</code> is suggested when it matches. Transport and Parameter Local are calculated only when that route exists in the Distance table.
             </div>
 
             {loading ? (

@@ -152,7 +152,7 @@ export default function Layout() {
               isOpen={openSections.payment}
               onToggle={() => toggleSection('payment')}
             >
-              <SidebarItem to="/posting" icon={Upload} label="Posting" />
+              <SidebarItem to="/posting" icon={Upload} label="Processing" />
               <SidebarItem to="/payments" icon={CreditCard} label="Payment" />
             </NavSection>
 

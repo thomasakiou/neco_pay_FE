@@ -12,10 +12,11 @@ export default function ReportPage() {
     const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
     const [selectedTitle, setSelectedTitle] = useState<string>('');
-    const [reportHeader, setReportHeader] = useState<string>('NECO POSTING - SSCE 2024 (EXTERNAL) MONITORING EXERCISE');
+    const [reportHeader, setReportHeader] = useState<string>('2025 SSCE EXTERNAL MARKING EXERCISE');
     const [generating, setGenerating] = useState<string | null>(null);
     const [showFieldSelector, setShowFieldSelector] = useState(false);
     const [visibleFields, setVisibleFields] = useState<Set<string>>(() => new Set(ALL_REPORT_FIELDS.map(f => f.key)));
+    const [showDetailsTotals, setShowDetailsTotals] = useState(false);
 
     const toggleField = (key: string) => {
         setVisibleFields(prev => {
@@ -25,6 +26,7 @@ export default function ReportPage() {
         });
     };
 
+    const getFilteredPayments = () => selectedTitle === 'All' ? payments : payments.filter(p => p.payment_title === selectedTitle);
     const activeFields = ALL_REPORT_FIELDS.map(f => f.key).filter(k => visibleFields.has(k));
 
     const fetchData = async () => {
@@ -53,13 +55,13 @@ export default function ReportPage() {
         // Give UI a moment to update
         setTimeout(() => {
             try {
-                const filtered = payments.filter(p => p.payment_title === selectedTitle);
+                const filtered = getFilteredPayments();
                 if (filtered.length === 0) {
                     setToast({ message: 'No records found for this title.', type: 'error' });
                     setGenerating(null);
                     return;
                 }
-                generateBankReport(filtered, selectedTitle);
+                generateBankReport(filtered, selectedTitle === 'All' ? 'All Payments' : selectedTitle);
                 setToast({ message: 'Bank Report generated.', type: 'success' });
             } catch (error) {
                 console.error(error);
@@ -127,6 +129,17 @@ export default function ReportPage() {
                                     </label>
                                 ))}
                             </div>
+                            <div className="mt-3 pt-3 border-t border-gray-100">
+                                <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none">
+                                    <input
+                                        type="checkbox"
+                                        checked={showDetailsTotals}
+                                        onChange={e => setShowDetailsTotals(e.target.checked)}
+                                        className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                    />
+                                    Show totals row at bottom of Details Report
+                                </label>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -149,13 +162,14 @@ export default function ReportPage() {
                             setGenerating('details');
                             setTimeout(() => {
                                 try {
-                                    const filtered = payments.filter(p => p.payment_title === selectedTitle);
+                                    const filtered = getFilteredPayments();
                                     if (filtered.length === 0) {
                                         setToast({ message: 'No records found for this title.', type: 'error' });
                                         setGenerating(null);
                                         return;
                                     }
-                                    generateDetailsReport(filtered, selectedTitle, reportHeader, activeFields);
+                                    const reportTitle = selectedTitle === 'All' ? 'All Payments' : selectedTitle;
+                                    generateDetailsReport(filtered, reportTitle, reportHeader, activeFields, showDetailsTotals);
                                     setToast({ message: 'Details Report generated.', type: 'success' });
                                 } catch (error) {
                                     console.error(error);
@@ -180,13 +194,13 @@ export default function ReportPage() {
                             setGenerating('summary');
                             setTimeout(() => {
                                 try {
-                                    const filtered = payments.filter(p => p.payment_title === selectedTitle);
+                                    const filtered = getFilteredPayments();
                                     if (filtered.length === 0) {
                                         setToast({ message: 'No records found for this title.', type: 'error' });
                                         setGenerating(null);
                                         return;
                                     }
-                                    generateSummaryReport(filtered, selectedTitle, reportHeader);
+                                    generateSummaryReport(filtered, selectedTitle === 'All' ? 'All Payments' : selectedTitle, reportHeader);
                                     setToast({ message: 'Summary Report generated.', type: 'success' });
                                 } catch (error) {
                                     console.error(error);
@@ -211,13 +225,13 @@ export default function ReportPage() {
                             setGenerating('excel');
                             setTimeout(() => {
                                 try {
-                                    const filtered = payments.filter(p => p.payment_title === selectedTitle);
+                                    const filtered = getFilteredPayments();
                                     if (filtered.length === 0) {
                                         setToast({ message: 'No records found for this title.', type: 'error' });
                                         setGenerating(null);
                                         return;
                                     }
-                                    generateExcelReport(filtered, selectedTitle, activeFields);
+                                    generateExcelReport(filtered, selectedTitle === 'All' ? 'All Payments' : selectedTitle, activeFields);
                                     setToast({ message: 'Excel Report generated.', type: 'success' });
                                 } catch (error) {
                                     console.error(error);

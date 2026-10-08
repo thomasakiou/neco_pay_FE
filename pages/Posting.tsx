@@ -32,7 +32,9 @@ export default function PostingPage() {
     const [localDistanceThreshold, setLocalDistanceThreshold] = useState<number>(40);
     const [applyTransportThreshold, setApplyTransportThreshold] = useState(false);
     const [transportDistanceThreshold, setTransportDistanceThreshold] = useState<number>(40);
+    const [useParameterTable, setUseParameterTable] = useState(true);
     const [numbOfNights, setNumbOfNights] = useState<number>(0);
+    const [localNightsDeduction, setLocalNightsDeduction] = useState<number>(1);
     const [tax, setTax] = useState<number>(0);
 
     // Pagination & Sorting
@@ -155,8 +157,8 @@ export default function PostingPage() {
                 const accountNo = staff?.account_no || '';
                 const stationRaw = posting.station?.trim() || '';
                 const postingRaw = posting.posting?.trim() || '';
-                const stationResolved = resolveLocation(stationRaw, states, distances).toLowerCase();
-                const postingResolved = resolveLocation(postingRaw, states, distances).toLowerCase();
+                const stationResolved = resolveLocation(stationRaw, states, distances, 'source').toLowerCase();
+                const postingResolved = resolveLocation(postingRaw, states, distances, 'target').toLowerCase();
                 const distanceRecord = distances.find(
                     d => d.source?.toString().trim().toLowerCase() === stationResolved &&
                         d.target?.toString().trim().toLowerCase() === postingResolved
@@ -173,13 +175,19 @@ export default function PostingPage() {
                     if (contissDigits && postingDigits) return Number(contissDigits) === Number(postingDigits);
                     return parameterGrade === postingGrade;
                 });
-                const kilometer = parameterRecord?.kilometer || 0;
+                const kilometer = useParameterTable ? (parameterRecord?.kilometer || 0) : 0;
                 const transportEligible = !applyTransportThreshold || distKm == null || distKm > transportDistanceThreshold;
                 const transport = transportEligible ? dist * kilometer * 2 : 0;
                 const amtPerNight = parameterRecord?.pernight || 0;
-                const parameterLocal = includeParameterLocal && distKm != null && distKm <= localDistanceThreshold ? parameterRecord?.local || 0 : 0;
+                const parameterLocal = useParameterTable && includeParameterLocal && distKm != null && distKm <= localDistanceThreshold ? parameterRecord?.local || 0 : 0;
                 const localRuns = localRunsInput + parameterLocal;
-                const staffNights = numbOfNights + (posting.no_of_nights || 0);
+                const hasLocalRuns = localRuns > 0;
+                const csvNights = posting.no_of_nights != null && posting.no_of_nights > 0 ? posting.no_of_nights : null;
+                const staffNights = csvNights != null
+                    ? csvNights
+                    : hasLocalRuns
+                        ? Math.max(0, numbOfNights - localNightsDeduction)
+                        : numbOfNights;
                 const dta = amtPerNight * staffNights;
                 const grossPay = transport + dta + fuel + localRuns;
                 const taxDeduction = (grossPay * tax) / 100;
@@ -416,6 +424,20 @@ export default function PostingPage() {
             {/* Process Form */}
             <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                 <h2 className="text-lg font-bold text-gray-900 mb-4">Generate Payments</h2>
+                <div className="mb-3">
+                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none">
+                        <input
+                            type="checkbox"
+                            checked={useParameterTable}
+                            onChange={e => setUseParameterTable(e.target.checked)}
+                            className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        />
+                        <span>Use Payment Parameter table for <strong>Kilometer</strong> (transport) and <strong>Local</strong></span>
+                    </label>
+                    {!useParameterTable && (
+                        <p className="mt-1 ml-6 text-xs text-amber-600">Parameter table ignored — transport uses 0 km rate, local runs use textbox value only.</p>
+                    )}
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Payment Title</label>
@@ -458,6 +480,17 @@ export default function PostingPage() {
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Number of Nights</label>
                         <input type="number" min="0" step="1" value={numbOfNights} onChange={(e) => setNumbOfNights(Number(e.target.value))} className="w-full h-11 px-4 rounded-lg border-gray-200 focus:border-primary-500 focus:ring-primary-500 transition-all text-sm" placeholder="0" />
+                        <div className="mt-2 flex items-center gap-2 text-xs text-gray-600">
+                            <span>Deduct</span>
+                            <input
+                                type="number"
+                                min="0"
+                                value={localNightsDeduction}
+                                onChange={(e) => setLocalNightsDeduction(Number(e.target.value))}
+                                className="w-12 h-6 px-1.5 rounded border border-gray-300 text-xs focus:border-primary-500 focus:ring-primary-500"
+                            />
+                            <span>night(s) if local runs apply</span>
+                        </div>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Tax</label>

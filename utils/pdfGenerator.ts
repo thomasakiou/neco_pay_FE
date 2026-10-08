@@ -127,7 +127,7 @@ export const generateBankReport = (payments: PaymentDTO[], title: string = 'Paym
     doc.save(`${safeTitle}_bank_report.pdf`);
 };
 
-export const generateDetailsReport = (payments: PaymentDTO[], title: string = 'Payment Details', headerText: string = 'NECO POSTING - SSCE 2024 (EXTERNAL) MONITORING EXERCISE', activeFields: string[] = ALL_REPORT_FIELDS.map(f => f.key)) => {
+export const generateDetailsReport = (payments: PaymentDTO[], title: string = 'Payment Details', headerText: string = 'NECO POSTING - SSCE 2024 (EXTERNAL) MONITORING EXERCISE', activeFields: string[] = ALL_REPORT_FIELDS.map(f => f.key), showTotals: boolean = false) => {
     const doc = new jsPDF({ orientation: 'landscape' });
     const today = new Date().toLocaleDateString('en-GB');
 
@@ -179,6 +179,37 @@ export const generateDetailsReport = (payments: PaymentDTO[], title: string = 'P
             }
         })
     );
+
+    // Totals row — only for numeric summable columns
+    const summableCols = new Set(['numb_of_nights', 'dta', 'transport', 'fuel_local', 'tax', 'total_netpay']);
+    if (showTotals) {
+        // Find the index of the first non-summable col to use as the label cell
+        const firstSummableIdx = cols.findIndex(c => summableCols.has(c.key));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const totalsRow: any[] = cols.map((c, idx) => {
+            if (summableCols.has(c.key)) {
+                const sum = payments.reduce((acc, p) => {
+                    const val = c.key === 'numb_of_nights' ? (p.numb_of_nights || 0)
+                        : c.key === 'dta'          ? (p.dta || 0)
+                        : c.key === 'transport'    ? (p.transport || 0)
+                        : c.key === 'fuel_local'   ? (p.fuel_local || 0)
+                        : c.key === 'tax'          ? (p.tax || 0)
+                        : (p.total_netpay || 0);
+                    return acc + val;
+                }, 0);
+                return {
+                    content: c.key === 'numb_of_nights' ? sum : fmt(sum),
+                    styles: { fontStyle: 'bold', halign: c.halign || 'left' }
+                };
+            }
+            // Label cell — put 'TOTAL' in the last non-summable col before summables
+            if (idx === firstSummableIdx - 1) {
+                return { content: 'TOTAL', styles: { fontStyle: 'bold', halign: 'right' } };
+            }
+            return { content: '', styles: { fontStyle: 'bold' } };
+        });
+        tableBody.push(totalsRow);
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const columnStyles: Record<number, any> = {};
